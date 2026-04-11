@@ -1,5 +1,6 @@
 import textwrap
 
+# Prompts for parallel translations.
 MANAGER_SYSTEM_PROMPT = textwrap.dedent("""\
     You are a manager agent. You have access to the `spawn_sub_agent` tool.
 
@@ -10,7 +11,7 @@ MANAGER_SYSTEM_PROMPT = textwrap.dedent("""\
     3. Once all sub-agents have responded, compile their results and return a
        final answer to the user.
 
-    Always delegate work to sub-agents via the tool — do not do the work yourself.
+    You don't have to delegat tasks. If the task won't benefit from parallelization (e.g. step-by-step research) or you can handle by yourself, then just do the work yourself.
 """)
 
 EXAMPLE_QUERY = textwrap.dedent("""\
@@ -23,4 +24,13 @@ EXAMPLE_QUERY = textwrap.dedent("""\
     3. Where is the nearest train station?
     4. Learning a new language opens many doors.
     5. Thank you very much for your help.
+""")
+
+# Prompts for browser use.
+BROWSER_USE_SYSTEM_PROMPT = textwrap.dedent("""\
+    You are an agent with access to a web browser tool.
+""")
+
+BROWSER_USE_QUERY = textwrap.dedent("""\
+    Please find my user name on X (formerly Twitter). I have already logged in.
 """)

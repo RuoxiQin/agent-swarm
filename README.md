@@ -1,6 +1,6 @@
 # Agent Swarm
 
-A general-purpose parallel agent swarm built with **LangGraph Functional API** and **LangSmith** for trajectory visualization. The manager LLM autonomously decomposes a user request into sub-tasks and dispatches them to sub-agents in parallel.
+A general-purpose agent swarm built with **LangGraph Functional API**, **browser-use**, and **LangSmith** for trajectory visualization. The manager LLM runs a tool-call loop and can browse the web live using a real Chrome browser driven by Gemini.
 
 ## Architecture
 
@@ -11,16 +11,18 @@ User Query
 ┌─────────────────────────────────────────────────────┐
 │  Manager Agent  (tool-call loop)                    │
 │                                                     │
-│  1. Receives user query + MANAGER_SYSTEM_PROMPT     │
-│  2. Decides how many sub-tasks to spawn             │
-│  3. Calls `spawn_sub_agent` tool N times            │
-│  4. Compiles results into final answer              │
+│  Tools: browse_web, (spawn_sub_agent*)              │
+│                                                     │
+│  1. Receives user query + system prompt             │
+│  2. Decides which tools to call and how many times  │
+│  3. Compiles results into a final answer            │
 └───────────────────────┬─────────────────────────────┘
-                        │  spawn_sub_agent × N
+                        │  browse_web × N (parallel)
            ┌────────────┼────────────┐
            ▼            ▼            ▼
-      Sub-agent 1  Sub-agent 2  Sub-agent N
-      (parallel)   (parallel)   (parallel)
+      browser-use   browser-use  browser-use
+      session 1     session 2    session N
+      (Chrome)      (Chrome)     (Chrome)
            │            │            │
            └────────────┴────────────┘
                         │  results fan-in
@@ -28,45 +30,75 @@ User Query
                   Final Answer
 ```
 
+> *`spawn_sub_agent` is defined but currently not bound to the manager. Re-add it to `tools` in `agent_swarm` when you need parallel sub-agent delegation.
+
 ### Key components
 
 | Component | Description |
 |---|---|
 | `agent_swarm` | `@entrypoint` — the manager's tool-call agent loop |
-| `spawn_sub_agent` | LangChain `@tool` bound to the manager LLM. Takes a `prompt` and makes a single LLM call |
+| `browse_web` | LangChain `@tool` — opens a real Chrome window, drives it with Gemini via browser-use, and records the session |
+| `spawn_sub_agent` | LangChain `@tool` — spawns a sub-agent with its own tool loop (has access to `browse_web`) |
 | `run_tool_call` | LangGraph `@task` — wraps each tool invocation for parallel execution and LangSmith tracing |
-| `MANAGER_SYSTEM_PROMPT` | Instructs the manager to always delegate work to sub-agents via the tool |
+| `_on_browser_step` | Callback that prints live step info (URL, goal, action) to the terminal at each browser-use step |
+
+### How `browse_web` works
+
+browser-use drives a **real Chrome window** (your system Chrome, not Playwright's sandboxed Chromium). Gemini receives raw page state — DOM structure and a screenshot — and decides every browser action (click, scroll, type, navigate). No browser-use cloud API key is used.
+
+```
+browse_web(task)
+    │
+    ▼
+BrowserAgent (browser-use)
+    ├── LLM: ChatGoogle (Gemini via google.genai)
+    ├── Browser: system Chrome, headless=False
+    ├── Profile: your real Chrome profile (cookies/sessions copied to temp dir)
+    ├── demo_mode=True  →  agent panel overlaid in browser window
+    └── register_new_step_callback  →  live terminal output per step
+
+Each run saves to recordings/<YYYYMMDD_HHMMSS>/
+    ├── *.mp4        full-fidelity screen recording (CDP screencast)
+    ├── session.gif  animated GIF of LLM-visible screenshots
+    └── actions.json complete action history (goals, actions, results)
+```
 
 ### How parallelism works
 
-When the manager LLM returns multiple `tool_calls` in a single response, all are dispatched as `@task` instances before any `.result()` is awaited. This means all sub-agents run concurrently — total wall-clock time equals the slowest sub-agent, not the sum.
+When the manager LLM returns multiple `tool_calls` in one response, all are dispatched as `@task` instances before any `.result()` is awaited — so they run concurrently.
 
 ```
-manager LLM ──► [tool_call_0, tool_call_1, ..., tool_call_N]
-                      │             │                  │
-                   @task          @task              @task      ← all dispatched
-                      │             │                  │          before any .result()
-                      └─────────────┴──────────────────┘
-                                    │ fan-in
-                              final answer
+manager LLM ──► [browse_web_0, browse_web_1, ..., browse_web_N]
+                      │              │                   │
+                   @task           @task               @task    ← all dispatched first
+                      │              │                   │
+                      └──────────────┴───────────────────┘
+                                     │ fan-in
+                               final answer
 ```
 
 ## Setup
 
-**1. Clone and install dependencies**
+**1. Install dependencies**
 
 ```bash
 cd agent-swarm
 uv sync
 ```
 
-**2. Configure environment**
+**2. Install Playwright browsers** (first time only)
+
+```bash
+uv run python -m playwright install chromium
+```
+
+**3. Configure environment**
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and fill in:
+Edit `.env`:
 
 | Variable | Description |
 |---|---|
@@ -75,30 +107,20 @@ Edit `.env` and fill in:
 | `LANGSMITH_PROJECT` | LangSmith project name (default: `agent-swarm`) |
 | `LANGSMITH_TRACING` | Set to `true` to enable tracing |
 
-## Development
-
-**Run**
+## Running
 
 ```bash
 uv run python main.py
 ```
 
-**Add a dependency**
+A Chrome window will open. You can watch the agent scroll and click in real time. The demo panel in the browser shows the agent's current goal and last action. Each step is also printed to the terminal.
 
-```bash
-uv add <package>
-```
+Recordings are saved automatically to `recordings/<timestamp>/`.
 
-**Update dependencies**
+## Extending
 
-```bash
-uv sync --upgrade
-```
-
-## Extending the swarm
-
-The swarm is general-purpose. To adapt it to a new domain:
-
-1. Update `MANAGER_SYSTEM_PROMPT` in [main.py](main.py) to describe the manager's role and decomposition strategy.
-2. Update `EXAMPLE_QUERY` to reflect your use case.
-3. Optionally add more tools alongside `spawn_sub_agent` for the manager to use.
+- **Change the task**: edit `BROWSER_USE_QUERY` in `prompts.py`
+- **Change the system prompt**: edit `BROWSER_USE_SYSTEM_PROMPT` in `prompts.py`
+- **Re-enable sub-agent spawning**: add `spawn_sub_agent` back to the `tools` list in `agent_swarm`
+- **Use a different Chrome profile**: change `profile_directory` in the `BrowserProfile` (e.g. `"Profile 1"`)
+- **Add dependencies**: `uv add <package>`
