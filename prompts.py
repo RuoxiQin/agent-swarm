@@ -31,6 +31,10 @@ BROWSER_USE_SYSTEM_PROMPT = textwrap.dedent("""\
     You are an agent with access to a web browser tool.
 """)
 
-BROWSER_USE_QUERY = textwrap.dedent("""\
+BROWSER_USE_QUERY_GET_USERNAME = textwrap.dedent("""\
     Please find my user name on X (formerly Twitter). I have already logged in.
+""")
+
+BROWSER_USE_QUERY_GET_TWEETS = textwrap.dedent("""\
+    Please open X (formally Twitter), and find the latest 5 tweets by my friend `@XiJin12`. Find the post text content, their number of views, and number of likes.
 """)

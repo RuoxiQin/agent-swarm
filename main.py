@@ -202,7 +202,7 @@ def main():
     print("LangSmith tracing:", os.getenv("LANGSMITH_TRACING", "false"))
 
     print("\nRunning swarm...\n")
-    result = agent_swarm.invoke(prompts.BROWSER_USE_QUERY)
+    result = agent_swarm.invoke(prompts.BROWSER_USE_QUERY_GET_TWEETS)
 
     print("\n--- Final Answer ---")
     print(result)
