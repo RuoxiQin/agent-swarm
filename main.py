@@ -92,7 +92,6 @@ def browse_web(task: str) -> str:
             browser_profile=BrowserProfile(
                 headless=False,
                 channel=BrowserChannel.CHROME,
-                user_data_dir=CHROME_USER_DATA_DIR,
                 record_video_dir=run_dir,
             ),
             register_new_step_callback=_on_browser_step,
@@ -142,7 +141,7 @@ def spawn_sub_agent(prompt: str) -> str:
             messages.append(ToolMessage(
                 content=result, tool_call_id=tool_call["id"]))
 
-    return str(response.content).strip()
+    return _extract_text(response.content).strip()
 
 
 # ---------------------------------------------------------------------------
@@ -161,15 +160,21 @@ def agent_swarm(user_query: str) -> str:
     ]
 
     # Agent loop: keep going until the manager produces a response with no tool calls
-    while True:
-        response: AIMessage = manager_llm.invoke(messages)  # type: ignore[assignment]
+    MAX_TOOL_ROUNDS = 3
+    response: AIMessage
+    for round_idx in range(MAX_TOOL_ROUNDS):
+        response = manager_llm.invoke(messages)  # type: ignore[assignment]
         messages.append(response)
 
+        print(f"\n==== Manager round {round_idx + 1} ====")
+        print(f"  content   : {str(response.content)[:200]!r}")
+        print(f"  tool_calls: {len(response.tool_calls)} call(s)")
+        for tc in response.tool_calls:
+            print(f"    → {tc['name']}({str(tc['args'])[:120]}...)")
+
         if not response.tool_calls:
-            # Manager is done — final text answer
             break
 
-        # Dispatch all tool calls as parallel @task instances
         @task
         def run_tool_call(tool_name: str, tool_args: dict) -> str:
             return str(tools_by_name[tool_name].invoke(tool_args))
@@ -179,10 +184,11 @@ def agent_swarm(user_query: str) -> str:
             for tool_call in response.tool_calls
         ]
 
-        # Fan-in: collect all results (blocks until every sub-agent finishes)
         for tool_call_id, future in futures:
             tool_result = future.result()
-            print(f"  [Sub-agent] returned: {tool_result[:80]}...")
+            print(f"\n  [Tool result for {tool_call_id[:8]}]")
+            print(f"    content length: {len(tool_result)} chars")
+            print(f"    first 300 chars: {tool_result[:300]!r}")
             messages.append(
                 ToolMessage(
                     content=tool_result,
@@ -190,7 +196,19 @@ def agent_swarm(user_query: str) -> str:
                 )
             )
 
-    return str(response.content).strip()
+    return _extract_text(response.content).strip()
+
+
+def _extract_text(content) -> str:
+    """Flatten LangChain content (str or list of blocks) into plain text."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            block.get("text", "") if isinstance(block, dict) else str(block)
+            for block in content
+        )
+    return str(content)
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +220,7 @@ def main():
     print("LangSmith tracing:", os.getenv("LANGSMITH_TRACING", "false"))
 
     print("\nRunning swarm...\n")
-    result = agent_swarm.invoke(prompts.BROWSER_USE_QUERY_GET_TWEETS)
+    result = agent_swarm.invoke(prompts.BROWSER_USE_QUERY_BOOK_LODGE)
 
     print("\n--- Final Answer ---")
     print(result)

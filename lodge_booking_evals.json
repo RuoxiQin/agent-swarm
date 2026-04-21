@@ -1,0 +1,9 @@
+{
+  "examples": [
+    {
+      "example_id": "cheapest-kirkwood-lodge-2026-04-25",
+      "query": "I want to book a lodge in Kirkwood for 4/25/2026 to 4/26/2026 (1 night, 1 person). Please help me check the cheapest room with at least 1 queen bed. Their website is https://www.kirkwood.com/plan-your-trip/stay/kirkwood-lodging.aspx. Which lodge is it and how much?\nNote that after you input the date, you'll need to click at a blank place to confirm the input.\n",
+      "golden_answer": "The cheapest room with a queen bed is **Meadows Region | Studio** at $293. If you have Epic pass, the reward price is $234. Note that although **Meadows Region | Hotel Room** is $258, its description is conflicting on the bed size so it's not recommended.\n"
+    }
+  ]
+}
