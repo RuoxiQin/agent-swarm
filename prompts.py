@@ -57,7 +57,7 @@ AUTORATER_SYSTEM_PROMPT = textwrap.dedent("""\
 """)
 
 AUTORATER_QUERY = textwrap.dedent("""\
-    Please evaluate the agent responses below against the golden answer for the given task. Rank the responses from best to worst and explain why.
+    Please evaluate the agent responses below against the golden answer for the given task. Rank the responses from best to worst and explain why. First priority the correctness, then the elapsed_seconds (shorter is better), then the cost (lower is better).
 
     [TASK_DESCRIPTION_BEGIN]
     {task_description}

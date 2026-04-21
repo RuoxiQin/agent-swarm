@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Eval Results</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --surface: #ffffff;
+    --border: #e5e5ea;
+    --text: #1d1d1f;
+    --muted: #86868b;
+    --accent: #0071e3;
+    --accent-soft: #e8f1fc;
+    --code-bg: #f4f4f5;
+    --rank-1: #1a7f37;
+    --rank-2: #9a6700;
+    --rank-3: #8250df;
+    --rank-other: #57606a;
+    --rank-unranked: #6e7781;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 24px 80px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .page { max-width: 1100px; margin: 0 auto; }
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 { margin: 0 0 4px; font-size: 28px; font-weight: 600; }
+  .page-header .meta { color: var(--muted); font-size: 13px; }
+  .example {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .example-header h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--text);
+  }
+  .summary {
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .summary-row { display: flex; gap: 12px; padding: 3px 0; }
+  .summary-label {
+    flex: 0 0 80px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding-top: 2px;
+  }
+  .summary-value { flex: 1; word-break: break-word; }
+  .rank-pill {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 10px;
+    margin: 0 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+  }
+  .si-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 16px;
+  }
+  .si-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--surface);
+  }
+  .si-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .si-card-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--rank-other);
+  }
+  .badge-rank-1 { background: var(--rank-1); }
+  .badge-rank-2 { background: var(--rank-2); }
+  .badge-rank-3 { background: var(--rank-3); }
+  .badge-unranked { background: var(--rank-unranked); }
+  .field { margin-top: 10px; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .field-value { font-size: 13px; }
+  pre.field-value {
+    margin: 0;
+    padding: 10px 12px;
+    background: var(--code-bg);
+    border-radius: 6px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+    max-height: 320px;
+    overflow: auto;
+  }
+  pre.response { max-height: 420px; }
+  .verdict {
+    padding: 8px 12px;
+    background: #fff8e6;
+    border-left: 3px solid #f0b429;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .muted { color: var(--muted); font-style: italic; }
+  .metrics-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .metrics-table th, .metrics-table td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .metrics-table tr:last-child td { border-bottom: none; }
+  .metrics-table th {
+    background: var(--code-bg);
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .metric-approach {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+  }
+  .result-ok { color: var(--rank-1); font-weight: 600; }
+  .result-fail { color: #cf222e; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <h1>Eval Results</h1>
+      <div class="meta">Generated 2026-04-21 16:08:52 &middot; 1 example(s)</div>
+    </header>
+    
+    <section class="example">
+      <header class="example-header">
+        <h2>cheapest-kirkwood-lodge-2026-04-25</h2>
+      </header>
+      <div class="summary">
+        <div class="summary-row"><span class="summary-label">Best</span><span class="summary-value"><span class="rank-pill">playwright-cli</span></span></div>
+        <div class="summary-row"><span class="summary-label">Tied</span><span class="summary-value"><span class="muted">none</span></span></div>
+        <div class="summary-row"><span class="summary-label">Reason</span><span class="summary-value">Both agents provided the correct answer and identified the same room and price as the golden answer. playwright-cli is ranked first because it was significantly faster and more cost-effective.</span></div>
+      </div>
+      
+        <table class="metrics-table">
+          <thead>
+            <tr><th>Approach</th><th>Rank</th><th>Result</th><th>Time</th><th>Tokens</th><th>Cost</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="metric-approach">playwright-cli</td>
+              <td><span class="badge badge-rank-1">#1</span></td>
+              <td><span class="result-ok">succeeded</span></td>
+              <td>217.6s</td>
+              <td>1,169,924</td>
+              <td>$0.1618</td>
+            </tr><tr>
+              <td class="metric-approach">agent-brwoser</td>
+              <td><span class="badge badge-rank-2">#2</span></td>
+              <td><span class="result-ok">succeeded</span></td>
+              <td>382.7s</td>
+              <td>1,661,170</td>
+              <td>$0.2559</td>
+            </tr>
+          </tbody>
+        </table>
+      <div class="si-grid">
+        
+        <div class="si-card">
+          <div class="si-card-header">
+            <h3>playwright-cli</h3>
+            <span class="badge badge-rank-1">#1</span>
+          </div>
+          <div class="field">
+            <div class="field-label">System instruction</div>
+            <pre class="field-value">Please use `playwright-cli --help` to learn how to browse web.</pre>
+          </div>
+          <div class="field">
+            <div class="field-label">Response</div>
+            <pre class="field-value response">For the stay from 4/25/2026 to 4/26/2026 (1 night, 1 person) at Kirkwood, the cheapest room with at least one queen bed is the **Studio** at the **Meadows Region**.
+
+*   **Lodge:** Meadows Region
+*   **Room Type:** Studio (features 1 queen bed, 1 full bath, and a kitchenette)
+*   **Price:** $293 (total including fees)
+
+While the &quot;Hotel Room&quot; at the Meadows Region is cheaper ($258), it only contains one double bed. The next cheapest option with a queen bed is a &quot;Slopeside Hotel Room&quot; at The Mountain Club for $355.</pre>
+          </div>
+          <div class="field">
+            <div class="field-label">Verdict</div>
+            <div class="field-value verdict">Correctly identified the Meadows Region | Studio at $293 as the cheapest option with a queen bed, noting the cheaper room only had a double bed.</div>
+          </div>
+        </div>
+        <div class="si-card">
+          <div class="si-card-header">
+            <h3>agent-brwoser</h3>
+            <span class="badge badge-rank-2">#2</span>
+          </div>
+          <div class="field">
+            <div class="field-label">System instruction</div>
+            <pre class="field-value">Please use `agent-browser --help` to learn how to browse web.</pre>
+          </div>
+          <div class="field">
+            <div class="field-label">Response</div>
+            <pre class="field-value response">The cheapest lodge with at least 1 queen bed for the night of April 25, 2026, to April 26, 2026, for one person is the **Meadows Region**. Specifically, the **Meadows Region | Studio** room is the cheapest option meeting your requirement.
+
+*   **Lodge:** Meadows Region
+*   **Room Type:** Studio
+*   **Price:** $293 (Online price, including fees)
+*   **Bed Configuration:** 1 Queen Bed
+
+Note: While the &quot;Meadows Region | Hotel Room&quot; is cheaper at $258, it features 1 double bed. The Studio unit is the next least expensive option and explicitly includes one queen bed, a wood-burning fireplace, and a kitchenette.</pre>
+          </div>
+          <div class="field">
+            <div class="field-label">Verdict</div>
+            <div class="field-value verdict">Correctly identified the Meadows Region | Studio at $293 as the cheapest option with a queen bed, noting the cheaper room only had a double bed.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

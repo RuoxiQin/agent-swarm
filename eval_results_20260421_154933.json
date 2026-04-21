@@ -1,0 +1,33 @@
+[
+  {
+    "example_id": "cheapest-kirkwood-lodge-2026-04-25",
+    "evaluation": {
+      "ranking": [
+        "agent-brwoser",
+        "playwright-cli"
+      ],
+      "tied": [],
+      "verdicts": {
+        "agent-brwoser": "Correctly identified the Meadows Region Studio at $293 as the cheapest option with a queen bed and noted the bed size discrepancy for the cheaper room; finished earlier than the other agent.",
+        "playwright-cli": "Correctly identified the Meadows Region Studio at $293 and provided the same reasoning for excluding the $258 room, but finished later than agent-brwoser."
+      },
+      "reason": "Both agents were equally correct and provided high-quality responses that matched the golden answer's logic regarding the bed size conflict. agent-brwoser is ranked higher because it finished significantly earlier based on the timestamps, which is prioritized over the lower cost of playwright-cli."
+    },
+    "results": {
+      "agent-brwoser": {
+        "si": "Please use `agent-browser --help` to learn how to browse web.",
+        "response": "PiAgentSessionAnalysis(id='a637f697-3618-45a8-82b8-5919da45741a', total_tokens=1953412, total_cost=0.24129920000000005, last_message=PiAgentLastMessage(role='assistant', text='The cheapest room with at least one queen bed for the night of April 25, 2026, to April 26, 2026, for one person at Kirkwood is the **Meadows Region | Studio**.\\n\\n*   **Lodge:** Meadows Region\\n*   **Room Type:** Studio (includes one queen bed, 1 full bath, and kitchenette)\\n*   **Price:** $293 (Online price, including fees)\\n\\nWhile there is a \"Hotel Room\" in the Meadows Region for $258, it only contains one double bed. The next cheapest option with queen beds is a \"Hotel Room\" at The Mountain Club for $355 (which includes two queen beds).', timestamp=1776811544132))",
+        "started_at": 1776811237.6319308,
+        "finished_at": 1776811550.322263,
+        "elapsed_seconds": 312.69033217430115
+      },
+      "playwright-cli": {
+        "si": "Please use `playwright-cli --help` to learn how to browse web.",
+        "response": "PiAgentSessionAnalysis(id='ac6503c5-bb33-454b-a9c2-a6301ada9547', total_tokens=1284088, total_cost=0.1693654, last_message=PiAgentLastMessage(role='assistant', text='The cheapest lodge for a stay from April 25, 2026, to April 26, 2026 (1 night, 1 person) at Kirkwood is the **Meadows Region**.\\n\\nThe cheapest room with at least one queen bed is the **Meadows Region | Studio**, which costs **$293** (including fees).\\n\\nWhile there is a \"Hotel Room\" at the Meadows Region for $258, it only features one double bed. The \"Studio\" room specifically includes one queen bed, a kitchenette, and a wood-burning fireplace. Another option is The Mountain Club, where a \"Slopeside Hotel Room\" with two queen beds is available for $355.', timestamp=1776811758747))",
+        "started_at": 1776811550.322284,
+        "finished_at": 1776811763.004718,
+        "elapsed_seconds": 212.68243408203125
+      }
+    }
+  }
+]

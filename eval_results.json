@@ -1,0 +1,33 @@
+[
+  {
+    "example_id": "cheapest-kirkwood-lodge-2026-04-25",
+    "evaluation": {
+      "ranking": [
+        "agent-brwoser",
+        "playwright-cli"
+      ],
+      "tied": [],
+      "verdicts": {
+        "agent-brwoser": "The agent failed to provide any response text, but it incurred a much lower cost than the other agent.",
+        "playwright-cli": "The agent failed to provide any response text and incurred a significantly higher cost and token usage."
+      },
+      "reason": "Both agents failed to provide a response, returning empty strings in their final messages. agent-brwoser is ranked higher simply because it was much cheaper and used fewer resources to reach its failure state."
+    },
+    "results": {
+      "agent-brwoser": {
+        "si": "Please use `agent-browser --help` to learn how to browse web.",
+        "response": "PiAgentSessionAnalysis(id='3a2d339e-c297-443d-8fe5-ba76e9d090e2', total_tokens=7274, total_cost=0.004344499999999999, last_message=PiAgentLastMessage(role='assistant', text='', timestamp=1776810753075))",
+        "started_at": 1776810749.6723359,
+        "finished_at": 1776810783.635423,
+        "elapsed_seconds": 33.96308708190918
+      },
+      "playwright-cli": {
+        "si": "Please use `playwright-cli --help` to learn how to browse web.",
+        "response": "PiAgentSessionAnalysis(id='e26f7565-1236-4fcc-9d6b-047f0b37f333', total_tokens=226715, total_cost=0.07663595000000001, last_message=PiAgentLastMessage(role='assistant', text='', timestamp=1776810883001))",
+        "started_at": 1776810783.635461,
+        "finished_at": 1776810916.773172,
+        "elapsed_seconds": 133.13771080970764
+      }
+    }
+  }
+]
